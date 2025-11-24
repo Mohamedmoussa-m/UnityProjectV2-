@@ -1,0 +1,46 @@
+# ========================
+# UNITY PROJECT .gitignore
+# ========================
+
+# Ignore these big auto-generated Unity folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+UserSettings/
+MemoryCaptures/
+sysinfo.txt
+
+# IDE / Editor folders
+.vscode/
+.vs/
+*.csproj
+*.sln
+*.suo
+*.user
+*.pidb
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Optional: ignore built games or exports
+[Bb]uild/
+[Bb]uilds/
+
+# Visual Studio cache
+.vs/
+
+# Crash and log files
+*.stackdump
+*.log
+
+# Backup files
+*.bak
+*.tmp

@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿
+using UnityEngine;
+using System;
 
 /// <summary>
 /// Builds and configures a chain of ArticulationBody joints for a robotic manipulator.
@@ -115,6 +117,6 @@ public class AutoJointBuilderV2 : MonoBehaviour
             ab.jointFriction = 1f;
         }
 
-        Debug.Log("[AutoJointBuilderV2] Build complete ✅");
+        Debug.Log("[AutoJointBuilderV2] Build complete ✅");
     }
 }

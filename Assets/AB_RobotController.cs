@@ -3,7 +3,7 @@
 public class AB_RobotController : MonoBehaviour
 {
     [Header("Assign rotating joints in order (Link1 .. EndEff) — DO NOT include the fixed base")]
-    public ArticulationBody[] joints;   // any length (e.g., 5 for 5-DOF)
+    public ArticulationBody[] joints;   //
 
     [Header("Motion Speeds")]
     [Tooltip("Degrees per second when holding an inc/dec key (without Shift/Alt).")]
