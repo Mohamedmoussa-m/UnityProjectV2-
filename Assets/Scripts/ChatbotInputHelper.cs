@@ -44,6 +44,16 @@ namespace Assets.Scripts
                     return true;
                 }
             }
+
+            // Check NPCInteractor instances
+            var npcInteractors = Object.FindObjectsOfType<NPCInteractor>();
+            foreach (var npc in npcInteractors)
+            {
+                if (npc != null && npc.IsInputActive())
+                {
+                    return true;
+                }
+            }
             
             return false;
         }

@@ -72,6 +72,7 @@ Make sure these scripts have their `GeminiChat` references assigned:
 | **Color Coding** | User (blue), AI (green), Errors (red) |
 | **Auto-retry** | Exponential backoff on failures |
 | **Configurable** | All settings in ScriptableObject |
+| **Project-Aware System Prompt** | Chatbot knows about your VR robotics project, controls, and features |
 
 ---
 
@@ -92,6 +93,9 @@ Edit `GeminiChatConfig` asset to customize:
 
 ### System Behavior
 - **System Instruction**: Guide the AI's personality/behavior
+  - **Default**: Project-aware prompt that makes the chatbot knowledgeable about your VR robotics training environment
+  - The chatbot now knows about robot controls, game modes, VR interactions, and available systems
+  - See `CHATBOT_SYSTEM_PROMPT_GUIDE.md` for full details
 - **Max History Messages**: How many messages to keep (default: 20)
 
 ### Network Settings

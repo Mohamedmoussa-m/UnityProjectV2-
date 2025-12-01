@@ -383,5 +383,13 @@ namespace Assets.Scripts
         {
             return isProcessing;
         }
+        
+        /// <summary>
+        /// Get the configuration (for use by VoiceInputManager and other components)
+        /// </summary>
+        public GeminiChatConfig GetConfig()
+        {
+            return config;
+        }
     }
 }
