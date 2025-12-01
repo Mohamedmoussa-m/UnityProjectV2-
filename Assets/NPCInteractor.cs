@@ -56,7 +56,7 @@ public class NPCInteractor : MonoBehaviour
             if (promptCanvas != null) promptCanvas.SetActive(true);
 
             // Check for the Interaction Keypress
-            if (Input.GetKeyDown(INTERACT_KEY))
+            if (Assets.Scripts.GlobalInputManager.GetKeyDown(INTERACT_KEY))
             {
                 ActivateChat();
             }
@@ -71,14 +71,14 @@ public class NPCInteractor : MonoBehaviour
         if (isChatActive)
         {
             // Check for Enter/Return key press
-            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+            if (Assets.Scripts.GlobalInputManager.GetKeyDown(KeyCode.Return) || Assets.Scripts.GlobalInputManager.GetKeyDown(KeyCode.KeypadEnter))
             {
-                SendMessage();
+                SendChatMessage(); // Renamed to avoid conflict with Unity's SendMessage
             }
         }
 
         // 3. Allow player to close the chat using the same key
-        if (isChatActive && Input.GetKeyDown(INTERACT_KEY))
+        if (isChatActive && Assets.Scripts.GlobalInputManager.GetKeyDown(INTERACT_KEY))
         {
             DeactivateChat();
         }
@@ -102,7 +102,7 @@ public class NPCInteractor : MonoBehaviour
         chatUIPanel.SetActive(false); // Hide the main UI
     }
 
-    public void SendMessage() // Made public so it can be called by a UI Button too
+    public void SendChatMessage() // Renamed from SendMessage to avoid Unity conflicts
     {
         // Use .text from the TMP_InputField
         string userMessage = inputField.text;
@@ -116,11 +116,16 @@ public class NPCInteractor : MonoBehaviour
         // Display the user's message and a waiting message for the AI
         chatOutputText.text = $"You: {userMessage}\n\nRobot NPC: ...Thinking...";
 
-        // 2. Start the API call using the Coroutine from the GeminiChat script
-        // Note: We check if the geminiChat script is linked before calling
+        // 2. Use the new GeminiChat.SendMessage API
         if (geminiChat != null)
         {
-            StartCoroutine(geminiChat.SendMessageToGemini(userMessage, OnGeminiResponseReceived));
+            geminiChat.SendMessage(userMessage, 
+                onComplete: OnGeminiResponseReceived,
+                onError: (error) => {
+                    chatOutputText.text = $"Error: {error}";
+                    inputField.ActivateInputField();
+                }
+            );
         }
         else
         {
@@ -128,7 +133,7 @@ public class NPCInteractor : MonoBehaviour
         }
     }
 
-    // Callback function passed to GeminiChat.SendMessageToGemini
+    // Callback function for when response is received
     void OnGeminiResponseReceived(string reply)
     {
         // 3. Update the UI with the final response

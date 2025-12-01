@@ -963,7 +963,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ccb5a5c7f59a734cbd472acf3e09fc0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  apiKey: AIzaSyDvRu2vw3t2qylP0ezoG66QGghyshkvMWE
+  config: {fileID: 0}
 --- !u!114 &178132911
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1876,13 +1876,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Content: {fileID: 1512653645}
-  m_Horizontal: 1
+  m_Horizontal: 0
   m_Vertical: 1
-  m_MovementType: 1
+  m_MovementType: 0
   m_Elasticity: 0.1
   m_Inertia: 1
   m_DecelerationRate: 0.135
-  m_ScrollSensitivity: 1
+  m_ScrollSensitivity: 4
   m_Viewport: {fileID: 732140161}
   m_HorizontalScrollbar: {fileID: 164151379}
   m_VerticalScrollbar: {fileID: 1688665316}
@@ -2585,7 +2585,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ccb5a5c7f59a734cbd472acf3e09fc0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  apiKey: AIzaSyD_r0Md5nzrywRHsGpwTw7B4vKmZMpI6Iw
+  config: {fileID: 0}
 --- !u!114 &517439522
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9540,11 +9540,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0fe25de635214a44a7270e3bee1f29b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  textField: {fileID: 848531370}
+  chatDisplay: {fileID: 0}
   inputField: {fileID: 1684623518}
-  send_button: {fileID: 638660253}
-  apiKey: AIzaSyD_r0Md5nzrywRHsGpwTw7B4vKmZMpI6Iw
-  model: gemini-2.5-flash
+  sendButton: {fileID: 0}
+  clearHistoryButton: {fileID: 0}
+  scrollRect: {fileID: 0}
+  geminiChat: {fileID: 0}
+  typingSpeed: 0.02
+  userPrefix: 'You: '
+  aiPrefix: 'AI: '
+  userColor: {r: 0.4, g: 0.8, b: 1, a: 1}
+  aiColor: {r: 0.5, g: 1, b: 0.5, a: 1}
+  errorColor: {r: 1, g: 0.4, b: 0.4, a: 1}
 --- !u!1 &1898616999
 GameObject:
   m_ObjectHideFlags: 0
