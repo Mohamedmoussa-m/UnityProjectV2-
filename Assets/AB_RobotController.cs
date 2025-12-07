@@ -22,9 +22,13 @@ public class AB_RobotController : MonoBehaviour
     [Tooltip("Default selected joint (0-based index). Set -1 to start with no selection.")]
     public int defaultSelectedJoint = 0;
 
-    [Header("Keys (+/- per joint) – T/Y/U/I/O = right, G/H/J/K/L = left")]
+    [Header("Keys (Primary Axis) – T/Y/U/I/O = Right, G/H/J/K/L = Left")]
     public KeyCode[] increaseKeys = { KeyCode.T, KeyCode.Y, KeyCode.U, KeyCode.I, KeyCode.O };
     public KeyCode[] decreaseKeys = { KeyCode.G, KeyCode.H, KeyCode.J, KeyCode.K, KeyCode.L };
+
+    [Header("Keys (Vertical Axis) – Optional")]
+    public KeyCode[] increaseKeysVertical; // Assign keys here for individual vertical control if needed
+    public KeyCode[] decreaseKeysVertical;
 
     [Header("Extras")]
     public bool clampToLimits = true;          // keep target inside xDrive limits
@@ -41,7 +45,7 @@ public class AB_RobotController : MonoBehaviour
     [Tooltip("Optional UI Text to display selected joint info. Leave empty to disable.")]
     public Text jointInfoText;
 
-    private float[] targets; // degrees
+    private Vector2[] targets; // x=primary (degrees), y=vertical (degrees)
     private int selectedJointIndex = -1;
     private Color[] originalColors;
 
@@ -53,7 +57,7 @@ public class AB_RobotController : MonoBehaviour
             enabled = false; return;
         }
 
-        targets = new float[joints.Length];
+        targets = new Vector2[joints.Length];
         CacheOriginalColors();
 
         // Initialize targets from current joint positions (radians -> degrees)
@@ -61,7 +65,14 @@ public class AB_RobotController : MonoBehaviour
         {
             var ab = joints[i]; if (!ab) continue;
             var pose = ab.jointPosition; // radians
-            targets[i] = (pose.dofCount > 0 ? pose[0] : 0f) * Mathf.Rad2Deg;
+            
+            // Primary Axis (Index 0)
+            float xVal = (pose.dofCount > 0) ? pose[0] * Mathf.Rad2Deg : 0f;
+            
+            // Spin Axis (Index 1) - Swing Y for spinning the joint
+            float yVal = (pose.dofCount > 1) ? pose[1] * Mathf.Rad2Deg : 0f;
+
+            targets[i] = new Vector2(xVal, yVal);
         }
 
         if (defaultSelectedJoint >= 0 && defaultSelectedJoint < joints.Length && joints[defaultSelectedJoint] != null)
@@ -87,11 +98,22 @@ public class AB_RobotController : MonoBehaviour
         {
             var ab = joints[i]; if (!ab) continue;
 
+            // Primary Axis (Existing)
             bool inc = (i < increaseKeys.Length) && increaseKeys[i] != KeyCode.None && Assets.Scripts.GlobalInputManager.GetKey(increaseKeys[i]);
             bool dec = (i < decreaseKeys.Length) && decreaseKeys[i] != KeyCode.None && Assets.Scripts.GlobalInputManager.GetKey(decreaseKeys[i]);
 
-            if (inc && !dec) targets[i] += step;
-            if (dec && !inc) targets[i] -= step;
+            if (inc && !dec) targets[i].x += step;
+            if (dec && !inc) targets[i].x -= step;
+
+            // Spin Axis (Swing Y)
+            if (increaseKeysVertical != null && decreaseKeysVertical != null)
+            {
+                bool incV = (i < increaseKeysVertical.Length) && increaseKeysVertical[i] != KeyCode.None && Assets.Scripts.GlobalInputManager.GetKey(increaseKeysVertical[i]);
+                bool decV = (i < decreaseKeysVertical.Length) && decreaseKeysVertical[i] != KeyCode.None && Assets.Scripts.GlobalInputManager.GetKey(decreaseKeysVertical[i]);
+
+                if (incV && !decV) targets[i].y += step;
+                if (decV && !incV) targets[i].y -= step;
+            }
 
             ApplyTargetToJoint(i);
         }
@@ -105,10 +127,17 @@ public class AB_RobotController : MonoBehaviour
             {
                 var ab = joints[i]; if (!ab) continue;
                 var d = ab.xDrive;
-                float zero = Mathf.Clamp(0f, d.lowerLimit, d.upperLimit);
-                d.target = zero;
+                float zeroX = Mathf.Clamp(0f, d.lowerLimit, d.upperLimit);
+                d.target = zeroX;
                 ab.xDrive = d;
-                targets[i] = zero;
+
+                // Zero Spin axis if exists
+                var d2 = ab.yDrive;
+                float zeroY = Mathf.Clamp(0f, d2.lowerLimit, d2.upperLimit);
+                d2.target = zeroY;
+                ab.yDrive = d2;
+
+                targets[i] = new Vector2(zeroX, zeroY);
             }
         }
 
@@ -149,20 +178,33 @@ public class AB_RobotController : MonoBehaviour
 
     private void HandleArrowKeySteps()
     {
-        if (selectedJointIndex < 0 || selectedJointIndex >= joints.Length || joints[selectedJointIndex] == null) return;
+        // Primary Axis (Q/E) - controls SELECTED joint
+        if (selectedJointIndex >= 0 && selectedJointIndex < joints.Length && joints[selectedJointIndex] != null)
+        {
+            float deltaX = 0f;
+            if (Input.GetKeyDown(KeyCode.Q)) deltaX += arrowStepDegrees;
+            if (Input.GetKeyDown(KeyCode.E)) deltaX -= arrowStepDegrees;
 
-        float delta = 0f;
-        bool increase = Input.GetKeyDown(KeyCode.Q);
-        bool decrease = Input.GetKeyDown(KeyCode.E);
+            if (!Mathf.Approximately(deltaX, 0f))
+            {
+                targets[selectedJointIndex].x += deltaX;
+                ApplyTargetToJoint(selectedJointIndex);
+            }
+        }
 
-        // Q to increase, E to decrease
-        if (increase) delta += arrowStepDegrees;
-        if (decrease) delta -= arrowStepDegrees;
+        // Spin Axis (F/R) - ALWAYS controls joint 0 (base) regardless of selection
+        if (joints.Length > 0 && joints[0] != null)
+        {
+            float deltaY = 0f;
+            if (Input.GetKeyDown(KeyCode.F)) deltaY += arrowStepDegrees;
+            if (Input.GetKeyDown(KeyCode.R)) deltaY -= arrowStepDegrees;
 
-        if (Mathf.Approximately(delta, 0f)) return;
-
-        targets[selectedJointIndex] += delta;
-        ApplyTargetToJoint(selectedJointIndex);
+            if (!Mathf.Approximately(deltaY, 0f))
+            {
+                targets[0].y += deltaY;
+                ApplyTargetToJoint(0);
+            }
+        }
     }
 
     private void ApplyTargetToJoint(int jointIndex)
@@ -170,12 +212,24 @@ public class AB_RobotController : MonoBehaviour
         if (jointIndex < 0 || jointIndex >= joints.Length) return;
         var ab = joints[jointIndex]; if (!ab) return;
 
-        var d = ab.xDrive; // struct
-        if (clampToLimits && (!Mathf.Approximately(d.lowerLimit, 0f) || !Mathf.Approximately(d.upperLimit, 0f)))
-            targets[jointIndex] = Mathf.Clamp(targets[jointIndex], d.lowerLimit, d.upperLimit);
+        // --- Primary Axis (xDrive) ---
+        var dX = ab.xDrive;
+        if (clampToLimits && (!Mathf.Approximately(dX.lowerLimit, 0f) || !Mathf.Approximately(dX.upperLimit, 0f)))
+            targets[jointIndex].x = Mathf.Clamp(targets[jointIndex].x, dX.lowerLimit, dX.upperLimit);
+        
+        dX.target = targets[jointIndex].x;
+        ab.xDrive = dX;
 
-        d.target = targets[jointIndex]; // degrees
-        ab.xDrive = d;
+        // --- Spin Axis (yDrive / Swing Y) ---
+        // Controls the spin/rotation around the joint's Y-axis.
+        // Make sure Swing Y is set to "Limited" in Unity Inspector for this to work.
+        
+        var dY = ab.yDrive;
+        if (clampToLimits && (!Mathf.Approximately(dY.lowerLimit, 0f) || !Mathf.Approximately(dY.upperLimit, 0f)))
+            targets[jointIndex].y = Mathf.Clamp(targets[jointIndex].y, dY.lowerLimit, dY.upperLimit);
+
+        dY.target = targets[jointIndex].y;
+        ab.yDrive = dY;
     }
 
     private void CacheOriginalColors()
@@ -255,13 +309,24 @@ public class AB_RobotController : MonoBehaviour
     {
         if (jointInfoText == null) return;
 
-        if (selectedJointIndex < 0 || selectedJointIndex >= joints.Length)
+        string displayText = "";
+
+        // Selected joint info (primary axis only)
+        if (selectedJointIndex >= 0 && selectedJointIndex < joints.Length)
         {
-            jointInfoText.text = "";
-            return;
+            string jointName = (selectedJointIndex == 0) ? "BASE" : selectedJointIndex.ToString();
+            float primaryAngle = targets[selectedJointIndex].x;
+            displayText += $"<color=lime>Selected Joint: {jointName}\nPrimary (Q/E): {primaryAngle:F1}°</color>";
         }
 
-        float currentAngle = targets[selectedJointIndex];
-        jointInfoText.text = $"<color=lime>Selected Joint: {selectedJointIndex}\nJoint Angle: {currentAngle:F1}°</color>";
+        // Base spin angle (always displayed independently)
+        if (joints.Length > 0 && joints[0] != null)
+        {
+            float baseSpinAngle = targets[0].y;
+            if (displayText.Length > 0) displayText += "\n";
+            displayText += $"<color=cyan>Base Spin (F/R): {baseSpinAngle:F1}°</color>";
+        }
+
+        jointInfoText.text = displayText;
     }
 }
